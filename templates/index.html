@@ -1,0 +1,3511 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hysteria 2 可视化管理面板</title>
+
+<style>
+
+
+
+
+/* Theme Switching Styles */
+
+:root{
+
+  --primary:#6366f1;--primary-hover:#4f46e5;
+
+  --bg-main:#0f172a;--bg-card:#1e293b;--bg-subcard:#111927;--bg-input:#0f172a;
+
+  --bg-header:#182234;--bg-header-alpha:rgba(30,41,59,0.7);--bg-hover:rgba(255,255,255,0.05);--btn-bg:#334155;--btn-border:#475569;--btn-text:#cbd5e1;--btn-hover:#475569;--border:#334155;--border-light:#475569;
+
+  --text-main:#f8fafc;--text-muted:#94a3b8;--text-sub:#cbd5e1;
+
+  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;--info:#38bdf8;
+
+}
+
+body.theme-light{
+
+  --bg-main:#f1f5f9;--bg-card:#ffffff;--bg-subcard:#f8fafc;--bg-input:#ffffff;
+
+  --bg-header:#ffffff;--bg-header-alpha:rgba(255,255,255,0.85);--bg-hover:rgba(0,0,0,0.05);--btn-bg:#e2e8f0;--btn-border:#cbd5e1;--btn-text:#475569;--btn-hover:#cbd5e1;--border:#e2e8f0;--border-light:#cbd5e1;
+
+  --text-main:#0f172a;--text-muted:#64748b;--text-sub:#334155;
+
+}
+
+.theme-switcher{display:inline-flex;gap:2px;background:var(--bg-input);padding:2px;border-radius:8px;border:1px solid var(--border)}
+
+.theme-btn{padding:4px 9px;border:none;background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s}
+
+.theme-btn:hover{color:var(--text-main)}
+
+.theme-btn.active{background:var(--primary);color:#fff}
+
+
+
+/* Outbound Test Badge */
+
+.ob-test-result{margin-top:6px;min-height:24px;display:flex;align-items:center}
+
+.ob-test-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;font-family:monospace}
+
+.ob-test-badge.ok{background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3)}
+
+.ob-test-badge.err{background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.3)}
+
+.warp-tag{background:linear-gradient(135deg,#f97316,#ea580c);color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700}
+
+.btn-test-ob{color:var(--info);border-color:rgba(56,189,248,0.4)}
+
+.btn-test-ob:hover{background:rgba(56,189,248,0.15)}
+
+
+
+/* WARP Card Styles */
+
+.warp-status-box{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px;background:var(--bg-subcard);border:1px solid var(--border);border-radius:8px}
+
+.warp-ip-box{font-family:monospace;font-size:13px;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+
+
+:root{
+
+  --primary:#6366f1;--primary-hover:#4f46e5;
+
+  --bg-main:#0f172a;--bg-card:#1e293b;--bg-input:#0f172a;
+
+  --border:#334155;--border-light:#475569;
+
+  --text-main:#f8fafc;--text-muted:#94a3b8;
+
+  --success:#10b981;--danger:#ef4444;--warning:#f59e0b;--info:#38bdf8;
+
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html,body{height:100vh;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg-main);color:var(--text-main)}
+
+body{display:flex;flex-direction:column}
+
+
+
+/* Header */
+
+.header{background:var(--bg-card);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+
+.header-left{display:flex;align-items:center;gap:12px}
+
+.header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text-main)}
+
+.header h1 span{color:var(--primary)}
+
+.badge-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(16,185,129,0.12);color:var(--success);border:1px solid rgba(16,185,129,0.3)}
+
+.badge-status.stopped{background:rgba(239,68,68,0.12);color:var(--danger);border-color:rgba(239,68,68,0.3)}
+
+.dot-pulse{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block;animation:pulse 2s infinite}
+
+@keyframes pulse{0%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+
+
+
+.right-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.controls{display:flex;gap:6px}
+
+.btn{padding:7px 14px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+
+.btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+
+.btn:active{transform:translateY(0)}
+
+.btn-start{background:#15803d;color:#fff}
+
+.btn-stop{background:#b91c1c;color:#fff}
+
+.btn-restart{background:#b45309;color:#fff}
+
+.btn-save{background:#2563eb;color:#fff}
+
+.btn-saverestart{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 2px 10px rgba(99,102,241,0.3)}
+
+.btn-logout{background:var(--btn-bg);color:var(--text-sub);border:1px solid var(--border)}
+
+
+
+/* Stats bar */
+
+.stats-bar{background:var(--bg-header-alpha);backdrop-filter:blur(8px);padding:8px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0;font-size:12px}
+
+.stat-item{display:flex;align-items:center;gap:5px;color:var(--text-muted)}
+
+.stat-item .label{color:var(--text-muted);font-size:11px}
+
+.stat-item .value{color:var(--text-main);font-weight:600;font-family:monospace}
+
+.stats-bar .sep{color:#334155;font-size:14px;user-select:none}
+
+
+
+/* Main Area */
+
+.main{flex:1 1 0;display:flex;flex-direction:row;padding:12px 16px;min-height:0;overflow:hidden;gap:10px}
+
+.main-left{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+
+.divider{width:6px;cursor:col-resize;background:transparent;flex-shrink:0;position:relative;margin:0 -3px;z-index:10}
+
+.divider:hover,.divider.active{background:var(--primary)}
+
+.divider::after{content:"";position:absolute;top:50%;left:50%;width:2px;height:32px;background:#475569;transform:translate(-50%,-50%);border-radius:2px}
+
+.main-right{width:42%;display:flex;flex-direction:column;min-width:0;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+
+
+
+/* Left Pane Nav */
+
+.view-mode-bar{padding:8px 12px;background:var(--bg-header);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+
+.mode-tabs{display:flex;gap:4px;background:var(--bg-main);padding:3px;border-radius:8px;border:1px solid var(--border)}
+
+.mode-tab-btn{padding:5px 14px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:all .15s}
+
+.mode-tab-btn.active{background:var(--primary);color:var(--text-main);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+
+
+
+/* GUI Subtabs */
+
+.gui-subtabs{display:flex;gap:6px;padding:8px 14px;background:var(--bg-header);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+
+.subtab-btn{padding:6px 14px;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .15s}
+
+.subtab-btn:hover{color:var(--text-main);background:var(--bg-hover)}
+
+.subtab-btn.active{color:var(--text-main);background:rgba(99,102,241,0.25);border:1px solid rgba(99,102,241,0.4);font-weight:600}
+
+.pill-count{background:var(--btn-bg);color:var(--text-sub);padding:1px 6px;border-radius:10px;font-size:11px}
+
+
+
+/* GUI Content Container */
+
+.gui-container{flex:1 1 0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+
+.tab-pane{display:none;flex-direction:column;gap:16px}
+
+.tab-pane.active{display:flex}
+
+
+
+/* Cards & Forms */
+
+.gui-card{background:var(--bg-header);border:1px solid var(--border);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:14px}
+
+.gui-card-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:10px}
+
+.gui-card-title{font-size:14px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:8px}
+
+.gui-card-desc{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+
+.form-group{display:flex;flex-direction:column;gap:6px}
+
+.form-group.full{grid-column:1/-1}
+
+.form-label{font-size:12px;font-weight:600;color:var(--text-sub);display:flex;align-items:center;justify-content:space-between}
+
+.form-label small{color:var(--text-muted);font-weight:400}
+
+.form-input{width:100%;padding:9px 12px;border:1px solid var(--border-light);border-radius:6px;background:var(--bg-input);color:var(--text-main);font-size:13px;outline:none;transition:all .15s}
+
+.form-input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(99,102,241,0.2)}
+
+.form-select{width:100%;padding:9px 12px;border:1px solid var(--border-light);border-radius:6px;background:var(--bg-input);color:var(--text-main);font-size:13px;outline:none}
+
+
+
+.input-with-action{display:flex;gap:6px}
+
+.input-with-action .form-input{flex:1}
+
+.btn-mini{padding:6px 10px;background:var(--btn-bg);border:1px solid var(--border);border-radius:6px;color:var(--text-sub);cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+
+.btn-mini:hover{background:var(--btn-hover);color:var(--text-main)}
+
+
+
+.toggle-switch{position:relative;display:inline-block;width:38px;height:20px}
+
+.toggle-switch input{opacity:0;width:0;height:0}
+
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#475569;transition:.2s;border-radius:20px}
+
+.toggle-slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background-color:white;transition:.2s;border-radius:50%}
+
+input:checked + .toggle-slider{background-color:var(--primary)}
+
+input:checked + .toggle-slider:before{transform:translateX(18px)}
+
+
+
+/* Outbounds List */
+
+.outbound-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+
+.ob-card{background:var(--bg-subcard);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;position:relative;transition:all .15s}
+
+.ob-card:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(0,0,0,0.3)}
+
+.ob-card-top{display:flex;align-items:center;justify-content:space-between}
+
+.ob-name{font-size:14px;font-weight:700;color:var(--text-main)}
+
+.ob-badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+
+.ob-badge.socks5{background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3)}
+
+.ob-badge.direct{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
+
+.ob-badge.http{background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.3)}
+
+.ob-details{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-muted);font-family:monospace}
+
+.ob-actions{display:flex;gap:6px;justify-content:flex-end;margin-top:6px;border-top:1px solid var(--border);padding-top:8px}
+
+
+
+/* ACL Table */
+
+.acl-table{width:100%;border-collapse:collapse;font-size:13px}
+
+.acl-table th{text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:600;font-size:11px;border-bottom:1px solid var(--border);background:#131c2e}
+
+.acl-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text-sub);font-family:monospace}
+
+.acl-table tr:hover td{background:var(--bg-hover)}
+
+.acl-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(99,102,241,0.15);color:#a5b4fc;border:1px solid rgba(99,102,241,0.3)}
+
+
+
+/* Raw Editor */
+
+#raw-pane{flex:1 1 0;display:none;flex-direction:column;min-height:0;padding:12px}
+
+#raw-pane.active{display:flex}
+
+#config-editor{flex:1 1 0;width:100%;background:var(--bg-main);color:var(--text-sub);border:1px solid var(--border);border-radius:6px;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:13px;line-height:1.6;padding:12px;resize:none;outline:none;tab-size:2}
+
+#config-editor:focus{border-color:var(--primary)}
+
+
+
+/* Right Pane - Logs & Streams */
+
+.log-bar{padding:8px 12px;background:var(--bg-header);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+
+.tab-btn{background:none;border:none;cursor:pointer;font-size:13px;font-weight:600;padding:4px 10px;color:var(--text-muted);border-radius:6px;transition:all .15s}
+
+.tab-btn.active{color:var(--text-main);background:var(--btn-bg)}
+
+.log-controls{display:flex;align-items:center;gap:6px}
+
+#log-content{flex:1 1 0;min-height:0;background:var(--bg-main);color:var(--text-main);font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:12px;line-height:1.5;padding:10px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+
+#conn-content{flex:1 1 0;min-height:0;overflow-y:auto;background:var(--bg-main)}
+
+.conn-summary{padding:10px 14px;font-size:12px;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:#131c2e}
+
+.conn-summary b{color:var(--text-main)}
+
+.conn-table{width:100%;border-collapse:collapse;font-size:12px}
+
+.conn-table th{text-align:left;padding:8px 10px;color:var(--text-muted);font-weight:600;font-size:11px;border-bottom:1px solid var(--border);background:#131c2e}
+
+.conn-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text-sub);font-family:monospace;word-break:break-all}
+
+.conn-table tr:hover td{background:var(--bg-hover)}
+
+.conn-table td.num{text-align:right;white-space:nowrap}
+
+.conn-table td.tx{color:#60a5fa}
+
+.conn-table td.rx{color:#4ade80}
+
+.conn-empty{padding:30px;text-align:center;color:var(--text-muted);font-size:13px}
+
+
+
+/* Modal Dialogs */
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999}
+
+.modal-overlay.show{display:flex}
+
+.modal-box{background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.6);width:460px;max-width:92%;padding:22px;display:flex;flex-direction:column;gap:16px}
+
+.modal-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:10px}
+
+.modal-title{font-size:15px;font-weight:700;color:var(--text-main)}
+
+.modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:8px;border-top:1px solid var(--border);padding-top:14px}
+
+
+
+/* Toast Alert */
+
+#alert-box{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;z-index:10000;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:90%;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+
+#alert-box.show{opacity:1;transform:translateX(-50%) translateY(5px)}
+
+.alert-ok{background:#065f46;color:#34d399;border:1px solid #059669}
+
+.alert-err{background:#881337;color:#fb7185;border:1px solid #be123c}
+
+.alert-info{background:#1e3a8a;color:#93c5fd;border:1px solid #2563eb}
+
+
+.btn-update{background:linear-gradient(135deg,#0d9488,#0f766e);color:#fff;box-shadow:0 2px 8px rgba(13,148,136,0.3)}
+</style>
+
+</head>
+
+<body>
+
+<div id="alert-box"></div>
+
+
+
+<!-- Modal: Outbound -->
+
+<div class="modal-overlay" id="modal-outbound">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div class="modal-title" id="modal-ob-title">添加出站节点</div>
+
+            <button class="btn-mini" onclick="closeModal('modal-outbound')">&#10005;</button>
+
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+            <input type="hidden" id="modal-ob-idx" value="-1">
+
+            <div class="form-group">
+
+                <label class="form-label">节点标识名称 (Name) *</label>
+
+                <input class="form-input" id="modal-ob-name" placeholder="例如: hk_socks, tor, node1">
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="form-label">节点类型 (Type) *</label>
+
+                <select class="form-select" id="modal-ob-type" onchange="updateOutboundModalFields()">
+
+                    <option value="socks5">Socks5 代理出站</option>
+
+                    <option value="direct">Direct 本地直连</option>
+
+                    <option value="http">HTTP 代理出站</option>
+
+                </select>
+
+            </div>
+
+            <!-- Socks5 / HTTP Fields -->
+
+            <div id="modal-ob-proxy-fields" style="display:flex;flex-direction:column;gap:12px">
+
+                <div class="form-group">
+
+                    <label class="form-label">服务器地址 (Host:Port) *</label>
+
+                    <input class="form-input" id="modal-ob-addr" placeholder="例如: 198.51.100.1:1080 或 domain.com:1080">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label">认证用户名 (可选)</label>
+
+                    <input class="form-input" id="modal-ob-user" placeholder="留空则无认证">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label">认证密码 (可选)</label>
+
+                    <input class="form-input" id="modal-ob-pass" placeholder="留空则无认证">
+
+                </div>
+
+            </div>
+
+            <!-- Direct Fields -->
+
+            <div id="modal-ob-direct-fields" style="display:none;flex-direction:column;gap:12px">
+
+                <div class="form-group">
+
+                    <label class="form-label">出站 IP 模式 (Mode)</label>
+
+                    <select class="form-select" id="modal-ob-mode">
+
+                        <option value="4">4 (仅 IPv4)</option>
+
+                        <option value="6">6 (仅 IPv6)</option>
+
+                        <option value="auto">auto (自动选择)</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+            
+
+        <div class="theme-switcher">
+
+            <button class="theme-btn" id="theme-btn-dark" onclick="setTheme('dark')" title="深色模式">&#127769; 深色</button>
+
+            <button class="theme-btn" id="theme-btn-light" onclick="setTheme('light')" title="浅色模式">&#9728;&#65039; 浅色</button>
+
+            <button class="theme-btn" id="theme-btn-auto" onclick="setTheme('auto')" title="跟随系统">&#127763; 自动</button>
+
+        </div>
+
+
+
+        
+            <button class="btn btn-update" onclick="updateHy2()" title="升级 Hysteria 2 核心到最新版本">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 10l-4 4-4-4M12 4v10"/></svg>
+                更新核心
+            </button>
+            <button class="btn btn-logout" onclick="closeModal('modal-outbound')">取消</button>
+
+            <button class="btn btn-save" onclick="saveOutboundModal()">确定保存</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Modal: ACL Rule -->
+
+<div class="modal-overlay" id="modal-acl">
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <div class="modal-title" id="modal-acl-title">添加分流规则</div>
+
+            <button class="btn-mini" onclick="closeModal('modal-acl')">&#10005;</button>
+
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+            <input type="hidden" id="modal-acl-idx" value="-1">
+
+            <div class="form-group">
+
+                <label class="form-label">目标出站节点 (Target Outbound) *</label>
+
+                <select class="form-select" id="modal-acl-outbound">
+
+                    <!-- Populated dynamically -->
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="form-label">快捷规则类型助手</label>
+
+                <select class="form-select" id="modal-acl-helper" onchange="applyAclHelper()">
+
+                    <option value="">-- 选择常用规则预设模板 --</option>
+
+                    <option value="suffix:onion">洋葱网络域名 (suffix:onion)</option>
+
+                    <option value="geoip:cn">中国大陆 IP (geoip:cn)</option>
+
+                    <option value="geoip:telegram">Telegram 官方 IP 段 (geoip:telegram)</option>
+
+                    <option value="::/0">全量 IPv6 流量 (::/0)</option>
+
+                    <option value="0.0.0.0/0">全量 IPv4 流量 (0.0.0.0/0)</option>
+
+                    <option value="all">兜底全局规则 (all)</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label class="form-label">匹配表达式 (Rule Expression) *</label>
+
+                <input class="form-input" id="modal-acl-rule" placeholder="例如: suffix:onion, 0.0.0.0/0, *.example.com, all">
+
+                <small style="color:var(--text-muted);font-size:11px">支持: IP/CIDR (如 0.0.0.0/0, ::/0), 域名通配 (*.google.com), 后缀 (suffix:onion), GeoIP (geoip:cn), 兜底 (all)</small>
+
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+            
+
+        <div class="theme-switcher">
+
+            <button class="theme-btn" id="theme-btn-dark" onclick="setTheme('dark')" title="深色模式">&#127769; 深色</button>
+
+            <button class="theme-btn" id="theme-btn-light" onclick="setTheme('light')" title="浅色模式">&#9728;&#65039; 浅色</button>
+
+            <button class="theme-btn" id="theme-btn-auto" onclick="setTheme('auto')" title="跟随系统">&#127763; 自动</button>
+
+        </div>
+
+
+
+        
+            <button class="btn btn-update" onclick="updateHy2()" title="升级 Hysteria 2 核心到最新版本">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 10l-4 4-4-4M12 4v10"/></svg>
+                更新核心
+            </button>
+            <button class="btn btn-logout" onclick="closeModal('modal-acl')">取消</button>
+
+            <button class="btn btn-save" onclick="saveAclModal()">确定保存</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- Header -->
+
+<div class="header">
+
+    <div class="header-left">
+
+        <h1><span>&#9889;</span> Hysteria 2</h1>
+
+        <div class="badge-status" id="status-badge"><span class="dot-pulse"></span> <span id="status-text">检查中...</span></div>
+
+    </div>
+
+    <div class="right-bar">
+
+        <div class="controls">
+
+            <button class="btn btn-start" onclick="controlService('start')" title="启动服务">&#9654; 开启</button>
+
+            <button class="btn btn-stop" onclick="controlService('stop')" title="停止服务">&#9632; 关闭</button>
+
+            <button class="btn btn-restart" onclick="controlService('restart')" title="重启服务">&#8635; 重启</button>
+
+            <button class="btn btn-save" onclick="saveActiveConfig(false)" title="保存当前配置">&#128190; 保存配置</button>
+
+            <button class="btn btn-saverestart" onclick="saveActiveConfig(true)" title="保存并立即重启服务生效">&#9889; 保存并重启</button>
+
+        </div>
+
+        
+
+        <div class="theme-switcher">
+
+            <button class="theme-btn" id="theme-btn-dark" onclick="setTheme('dark')" title="深色模式">&#127769; 深色</button>
+
+            <button class="theme-btn" id="theme-btn-light" onclick="setTheme('light')" title="浅色模式">&#9728;&#65039; 浅色</button>
+
+            <button class="theme-btn" id="theme-btn-auto" onclick="setTheme('auto')" title="跟随系统">&#127763; 自动</button>
+
+        </div>
+
+
+
+        
+            <button class="btn btn-update" onclick="updateHy2()" title="升级 Hysteria 2 核心到最新版本">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 10l-4 4-4-4M12 4v10"/></svg>
+                更新核心
+            </button>
+            <button class="btn btn-logout" onclick="location.href='/logout'">&#128274; 退出</button>
+
+    </div>
+
+</div>
+
+
+
+<!-- System Stats -->
+
+<div class="stats-bar">
+
+    <span class="stat-item"><span class="label">CPU</span><span class="value" id="si-cpu">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">内存</span><span class="value" id="si-mem">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">磁盘</span><span class="value" id="si-disk">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">下行总量</span><span class="value" id="si-rx">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">上行总量</span><span class="value" id="si-tx">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">下行速度</span><span class="value" id="si-rx-speed" style="color:var(--success)">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">上行速度</span><span class="value" id="si-tx-speed" style="color:var(--info)">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">TCP</span><span class="value" id="si-tcp" style="color:var(--warning)">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">UDP</span><span class="value" id="si-udp" style="color:var(--warning)">--</span></span>
+
+    <span class="sep">|</span>
+
+    <span class="stat-item"><span class="label">启动时间</span><span class="value" id="si-hyst-start" style="color:#a78bfa">--</span></span>
+
+</div>
+
+
+
+<!-- Main Area -->
+
+<div class="main">
+
+    <!-- Left Configuration Pane -->
+
+    <div class="main-left">
+
+        <div class="view-mode-bar">
+
+            <div class="mode-tabs">
+
+                <button class="mode-tab-btn active" id="tab-btn-gui" onclick="switchViewMode('gui')">&#127912; 图形化配置</button>
+
+                <button class="mode-tab-btn" id="tab-btn-raw" onclick="switchViewMode('raw')">&#128221; 原始 YAML</button>
+
+            </div>
+
+            <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:10px">
+
+                <span id="cfg-file-label">/etc/hysteria/config.yaml</span>
+
+                <button class="btn-mini" onclick="loadAllConfig()" title="重新加载">&#128260; 刷新</button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- GUI Subtabs -->
+
+        <div class="gui-subtabs" id="gui-subtabs">
+
+            <button class="subtab-btn active" id="subtab-btn-server" onclick="switchSubTab('server')">&#128225; 核心与服务</button>
+
+            <button class="subtab-btn" id="subtab-btn-outbounds" onclick="switchSubTab('outbounds')">&#127760; 出站节点 <span class="pill-count" id="count-ob">0</span></button>
+
+            <button class="subtab-btn" id="subtab-btn-acl" onclick="switchSubTab('acl')">&#128256; 分流规则 <span class="pill-count" id="count-acl">0</span></button>
+
+            <button class="subtab-btn" id="subtab-btn-quic" onclick="switchSubTab('quic')">&#9889; 性能与流控</button>
+
+            <button class="subtab-btn" id="subtab-btn-warp" onclick="switchSubTab('warp')">&#128737;&#65039; WARP 工具箱</button>
+
+            <button class="subtab-btn" id="subtab-btn-export" onclick="switchSubTab('export')">&#128640; 节点分享导出</button>
+
+        </div>
+
+
+
+        <!-- GUI Container -->
+
+        <div class="gui-container" id="gui-container">
+
+            <!-- TAB 1: Server & Core -->
+
+            <div class="tab-pane active" id="pane-server">
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128225; 服务监听与网络</div>
+
+                            <div class="gui-card-desc">配置 Hysteria 2 服务监听的 IP 与 UDP 端口</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label class="form-label">监听地址与端口 (Listen) * <small>格式 :端口 或 IP:端口</small></label>
+
+                            <div class="input-with-action">
+
+                                <input class="form-input" id="gui-listen" placeholder=":51235">
+
+                                <button class="btn-mini" onclick="setPresetPort(51235)">51235</button>
+
+                                <button class="btn-mini" onclick="setPresetPort(443)">443</button>
+
+                                <button class="btn-mini" onclick="setPresetPort(8443)">8443</button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">协议类型</label>
+
+                            <input class="form-input" value="QUIC (UDP 传输)" disabled style="opacity:0.6;cursor:not-allowed">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128273; 访问认证 (Auth)</div>
+
+                            <div class="gui-card-desc">客户端连接服务端所使用的安全验证口令</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group full">
+
+                            <label class="form-label">认证密码 (Password) *</label>
+
+                            <div class="input-with-action">
+
+                                <input class="form-input" id="gui-password" type="password" placeholder="请输入连接密码">
+
+                                <button class="btn-mini" onclick="togglePassVisibility('gui-password')" title="显示/隐藏">&#128065;</button>
+
+                                <button class="btn-mini" onclick="generateRandomPass('gui-password')" title="生成强随机密码">&#127922; 随机生成</button>
+
+                                <button class="btn-mini" onclick="copyValue('gui-password')" title="复制密码">&#128203; 复制</button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128274; TLS 证书设置</div>
+
+                            <div class="gui-card-desc">Hysteria 2 强制使用 TLS 加密传输，指定证书与私钥绝对路径</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label class="form-label">证书文件路径 (cert) *</label>
+
+                            <input class="form-input" id="gui-tls-cert" placeholder="/etc/hysteria/cert.crt">
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">私钥文件路径 (key) *</label>
+
+                            <input class="form-input" id="gui-tls-key" placeholder="/etc/hysteria/private.key">
+
+                        </div>
+
+                        <div class="form-group full">
+
+                            <label class="form-label">SNI 伪装域名 (可选) <small>自签证书或多域名配置时指定</small></label>
+
+                            <input class="form-input" id="gui-tls-sni" placeholder="留空则自动从证书提取">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#127917; 网站伪装 (Masquerade)</div>
+
+                            <div class="gui-card-desc">当收到非 Hysteria 协议的 HTTP 探测时伪装的目标行为</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label class="form-label">伪装类型 (Type)</label>
+
+                            <select class="form-select" id="gui-masq-type">
+
+                                <option value="proxy">proxy (反向代理至目标网页)</option>
+
+                                <option value="file">file (本地静态文件目录)</option>
+
+                                <option value="404">404 (直接返回 404 Not Found)</option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">代理目标网站 (URL)</label>
+
+                            <input class="form-input" id="gui-masq-url" placeholder="例如: https://maimai.sega.jp 或 https://www.bing.com">
+
+                        </div>
+
+                        <div class="form-group full" style="flex-direction:row;align-items:center;justify-content:space-between">
+
+                            <div>
+
+                                <div style="font-size:13px;font-weight:600">重写 Host 请求头 (rewriteHost)</div>
+
+                                <div style="font-size:12px;color:var(--text-muted)">将反代请求的 Host 替换为目标网址的主机名，提高伪装真实度</div>
+
+                            </div>
+
+                            <label class="toggle-switch">
+
+                                <input type="checkbox" id="gui-masq-rewrite" checked>
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128202; 流量统计 API (TrafficStats)</div>
+
+                            <div class="gui-card-desc">Hysteria 内置的连接与流统计接口，供本面板实时读取</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label class="form-label">API 监听地址</label>
+
+                            <input class="form-input" id="gui-stats-listen" placeholder="127.0.0.1:19999" value="127.0.0.1:19999">
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">API 密钥 (Secret Token)</label>
+
+                            <div class="input-with-action">
+
+                                <input class="form-input" id="gui-stats-secret" placeholder="64位十六进制密钥">
+
+                                <button class="btn-mini" onclick="generateRandomSecret('gui-stats-secret')" title="生成新密钥">&#127922; 随机</button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TAB 2: Outbounds -->
+
+            <div class="tab-pane" id="pane-outbounds">
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#127760; 出站节点列表</div>
+
+                            <div class="gui-card-desc">配置可用于分流转发的 Socks5 / Direct 出站服务器</div>
+
+                        </div>
+
+                        <button class="btn-mini" onclick="testAllOutbounds()" title="测试所有节点连通性与出口IP">&#9889; 一键测试全部节点</button> <button class="btn btn-save" onclick="openAddOutboundModal()">&#10010; 添加出站节点</button>
+
+                    </div>
+
+                    <div class="outbound-list" id="outbound-cards-container">
+
+                        <!-- Rendered by JS -->
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TAB 3: ACL Rules -->
+
+            <div class="tab-pane" id="pane-acl">
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128256; ACL 分流规则</div>
+
+                            <div class="gui-card-desc">&#9888;&#65039; 规则由上至下依序匹配，首个命中的规则生效。可使用 ⬆ ⬇ 调整规则优先级。</div>
+
+                        </div>
+
+                        <button class="btn btn-save" onclick="openAddAclModal()">&#10010; 添加分流规则</button>
+
+                    </div>
+
+                    <div style="overflow-x:auto">
+
+                        <table class="acl-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th style="width:50px">序号</th>
+
+                                    <th style="width:70px">优先级</th>
+
+                                    <th style="width:140px">导向出站</th>
+
+                                    <th>匹配规则表达式</th>
+
+                                    <th style="width:100px;text-align:right">操作</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="acl-table-body">
+
+                                <!-- Rendered by JS -->
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TAB 4: QUIC & Performance -->
+
+            <div class="tab-pane" id="pane-quic">
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#9889; QUIC 流控窗口高级调优</div>
+
+                            <div class="gui-card-desc">调节单流与整连接的缓冲区大小，影响高延迟、大带宽下的吞吐性能</div>
+
+                        </div>
+
+                        <div style="display:flex;gap:6px">
+
+                            <button class="btn-mini" onclick="applyQuicPreset('extreme')">&#128640; 极速方案 (32M)</button>
+
+                            <button class="btn-mini" onclick="applyQuicPreset('balanced')">&#9878;&#65039; 均衡方案 (16M)</button>
+
+                            <button class="btn-mini" onclick="applyQuicPreset('light')">&#127811; 低内存方案 (8M)</button>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label class="form-label">初始流接收窗口 (initStreamReceiveWindow)</label>
+
+                            <input class="form-input" id="gui-quic-init-stream" type="number" placeholder="16777216">
+
+                            <small style="color:var(--text-muted);font-size:11px">默认 16777216 (16 MB)</small>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">最大流接收窗口 (maxStreamReceiveWindow)</label>
+
+                            <input class="form-input" id="gui-quic-max-stream" type="number" placeholder="16777216">
+
+                            <small style="color:var(--text-muted);font-size:11px">默认 16777216 (16 MB)</small>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">初始连接接收窗口 (initConnReceiveWindow)</label>
+
+                            <input class="form-input" id="gui-quic-init-conn" type="number" placeholder="33554432">
+
+                            <small style="color:var(--text-muted);font-size:11px">默认 33554432 (32 MB)</small>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">最大连接接收窗口 (maxConnReceiveWindow)</label>
+
+                            <input class="form-input" id="gui-quic-max-conn" type="number" placeholder="33554432">
+
+                            <small style="color:var(--text-muted);font-size:11px">默认 33554432 (32 MB)</small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128391; 带宽控制 (Bandwidth)</div>
+
+                            <div class="gui-card-desc">服务端限速选项。留空表示无限制，充分利用 BBR 拥塞控制。</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label class="form-label">上行限速 (Upload) <small>例如: 100 mbps</small></label>
+
+                            <input class="form-input" id="gui-bw-up" placeholder="留空不限制">
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label class="form-label">下行限速 (Download) <small>例如: 200 mbps</small></label>
+
+                            <input class="form-input" id="gui-bw-down" placeholder="留空不限制">
+
+                        </div>
+
+                        <div class="form-group full" style="flex-direction:row;align-items:center;justify-content:space-between">
+
+                            <div>
+
+                                <div style="font-size:13px;font-weight:600">忽略客户端声明的带宽 (ignoreClientBandwidth)</div>
+
+                                <div style="font-size:12px;color:var(--text-muted)">开启后无视客户端上报测速，强制按服务端 BBR 动态拥塞控制发送数据</div>
+
+                            </div>
+
+                            <label class="toggle-switch">
+
+                                <input type="checkbox" id="gui-bw-ignore">
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            
+
+            <!-- TAB 6: WARP Tool -->
+
+            <div class="tab-pane" id="pane-warp">
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128737;&#65039; Cloudflare WARP 核心状态</div>
+
+                            <div class="gui-card-desc">内置独立轻量 WARP 客户端，本地监听 Socks5 端口 127.0.0.1:40000，不影响 VPS 原生网卡与 SSH 连接</div>
+
+                        </div>
+
+                        <div style="display:flex;gap:6px">
+
+                            <button class="btn-mini" onclick="checkWarpStatus(true)">&#9889; 探测 WARP 出口</button>
+
+                            <button class="btn-mini" onclick="controlWarp('restart')">&#8635; 重启服务</button>
+
+                            <button class="btn-mini" onclick="controlWarp('re_register')">&#127922; 获取全新账号与IP</button>
+
+                        </div>
+
+                    </div>
+
+                    <div class="warp-status-box">
+
+                        <div style="display:flex;align-items:center;gap:10px">
+
+                            <div style="font-size:13px;font-weight:600">服务状态:</div>
+
+                            <span class="badge-status" id="warp-service-badge"><span class="dot-pulse"></span> <span id="warp-service-text">检测中...</span></span>
+
+                            <span style="font-size:12px;color:var(--text-muted)">| 端口: <b>Socks5 127.0.0.1:40000</b></span>
+
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:8px">
+
+                            <span style="font-size:12px;color:var(--text-muted)">Hy2 分流状态:</span>
+
+                            <span id="warp-hy2-status-badge" class="badge-status stopped" style="font-size:11px">未接入</span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="warp-ip-box" id="warp-trace-box">
+
+                        <span id="warp-trace-info">&#9203; 点击上方「探测 WARP 出口」获取当前 WARP 出站 IP 与地区...</span>
+
+                        <span id="warp-trace-tag"></span>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#9889; 一键走 WARP 控制中心</div>
+
+                            <div class="gui-card-desc">自动将 WARP 加入 Hysteria 2 出站并配置 ACL 分流，一键保存并平滑重启生效</div>
+
+                        </div>
+
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+
+                        <div style="background:var(--bg-subcard);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px">
+
+                            <div style="font-size:14px;font-weight:700;color:#fff">&#128640; 一键全局走 WARP</div>
+
+                            <div style="font-size:12px;color:var(--text-muted)">将 Hysteria 2 全量代理流量经由 Cloudflare WARP 干净住宅/商业 IP 出站，全面隐藏 VPS 真实 IP</div>
+
+                            <button class="btn btn-save" style="margin-top:auto" onclick="toggleHy2Warp('global')">&#128640; 立即启用全局走 WARP</button>
+
+                        </div>
+
+                        <div style="background:var(--bg-subcard);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px">
+
+                            <div style="font-size:14px;font-weight:700;color:#fff">&#127916; 一键流媒体 / AI 解锁</div>
+
+                            <div style="font-size:12px;color:var(--text-muted)">仅针对 OpenAI (ChatGPT)、Netflix、Disney+、Claude 等受限网站走 WARP，其他访问保持直连或原有出站</div>
+
+                            <button class="btn btn-start" style="margin-top:auto" onclick="toggleHy2Warp('unlock')">&#127916; 立即启用智能解锁分流</button>
+
+                        </div>
+
+                        <div style="background:var(--bg-subcard);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px">
+
+                            <div style="font-size:14px;font-weight:700;color:#fff">&#10006; 关闭 WARP 分流</div>
+
+                            <div style="font-size:12px;color:var(--text-muted)">移除 ACL 规则中的 WARP 分流，恢复原本的直连与其他代理节点分流设置</div>
+
+                            
+            <button class="btn btn-update" onclick="updateHy2()" title="升级 Hysteria 2 核心到最新版本">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 10l-4 4-4-4M12 4v10"/></svg>
+                更新核心
+            </button>
+            <button class="btn btn-logout" style="margin-top:auto" onclick="toggleHy2Warp('disable')">&#10006; 恢复默认分流</button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TAB 5: Client Export -->
+
+            <div class="tab-pane" id="pane-export">
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128640; Hysteria 2 客户端订阅链接</div>
+
+                            <div class="gui-card-desc">通用分享链接，支持 v2rayN、Nekoray、Clash Verge、Shadowrocket、Sing-box 等主流客户端直接导入</div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label class="form-label">标准分享链接 (hysteria2://)</label>
+
+                        <div class="input-with-action">
+
+                            <input class="form-input" id="export-uri" readonly style="font-family:monospace;background:var(--bg-main)">
+
+                            <button class="btn btn-save" onclick="copyValue('export-uri')">&#128203; 一键复制链接</button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128220; Clash Meta (Mihomo) 节点配置</div>
+
+                            <div class="gui-card-desc">可直接粘贴进 Clash Meta 配置文件的 proxies: 列表中</div>
+
+                        </div>
+
+                        <button class="btn-mini" onclick="copyValue('export-clash')">&#128203; 复制配置</button>
+
+                    </div>
+
+                    <textarea class="form-input" id="export-clash" readonly style="font-family:monospace;height:120px;resize:none;background:var(--bg-main)"></textarea>
+
+                </div>
+
+
+
+                <div class="gui-card">
+
+                    <div class="gui-card-header">
+
+                        <div>
+
+                            <div class="gui-card-title">&#128220; Sing-box 出站配置 (Outbound JSON)</div>
+
+                            <div class="gui-card-desc">可直接粘贴进 Sing-box 的 outbounds 数组中</div>
+
+                        </div>
+
+                        <button class="btn-mini" onclick="copyValue('export-singbox')">&#128203; 复制 JSON</button>
+
+                    </div>
+
+                    <textarea class="form-input" id="export-singbox" readonly style="font-family:monospace;height:140px;resize:none;background:var(--bg-main)"></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Raw YAML Pane -->
+
+        <div id="raw-pane">
+
+            <div style="padding:6px 2px 10px;display:flex;align-items:center;justify-content:space-between">
+
+                <span style="font-size:12px;color:var(--text-muted)">直接修改原始 YAML 文本文件。保存时会自动备份原配置并校验语法。</span>
+
+                <div style="display:flex;gap:6px">
+
+                    <button class="btn-mini" onclick="syncGuiToRawYaml()">&#8635; 从图形配置更新至 YAML</button>
+
+                </div>
+
+            </div>
+
+            <textarea id="config-editor" spellcheck="false"></textarea>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Draggable Divider -->
+
+    <div class="divider" id="divider"></div>
+
+
+
+    <!-- Right Logs & Monitoring Pane -->
+
+    <div class="main-right">
+
+        <div class="log-bar">
+
+            <span>
+
+                <button class="tab-btn active" id="tab-btn-log" onclick="switchMonitorTab('log')">&#128203; 实时日志</button>
+
+                <button class="tab-btn" id="tab-btn-conn" onclick="switchMonitorTab('conn')">&#128279; 连接与流监控</button>
+
+            </span>
+
+            <span class="log-controls" id="log-controls">
+
+                <span id="log-line-count" style="color:var(--text-muted);font-size:11px">0 lines</span>
+
+                <button class="btn-mini" onclick="loadLogs();if(!logAutoRefresh)toggleAutoRefresh();" title="立即刷新">&#128260;</button>
+
+                <button class="btn-mini" onclick="clearLogs()" title="清屏">&#128465;&#65039;</button>
+
+                <button class="btn-mini" id="log-auto-btn" onclick="toggleAutoRefresh()" title="自动刷新">&#9208;&#65039;</button>
+
+            </span>
+
+            <span class="log-controls" id="conn-controls" style="display:none">
+
+                <span id="conn-updated" style="color:var(--text-muted);font-size:11px"></span>
+
+                <button class="btn-mini" onclick="loadStreams()" title="刷新">&#128260;</button>
+
+            </span>
+
+        </div>
+
+        <div id="log-content"></div>
+
+        <div id="conn-content" style="display:none"></div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+
+
+// ---------- 主题管理 (深色 / 浅色 / 跟随系统) ----------
+
+function applyTheme(theme){
+
+    var isDark = true;
+
+    if(theme === 'light'){
+
+        isDark = false;
+
+    } else if(theme === 'dark'){
+
+        isDark = true;
+
+    } else {
+
+        isDark = !(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+
+    }
+
+    document.body.classList.toggle('theme-light', !isDark);
+
+    ['dark','light','auto'].forEach(function(t){
+
+        var b = document.getElementById('theme-btn-' + t);
+
+        if(b) b.classList.toggle('active', t === theme);
+
+    });
+
+}
+
+function setTheme(theme){
+
+    localStorage.setItem('hy2_theme', theme);
+
+    applyTheme(theme);
+
+}
+
+var currentTheme = localStorage.getItem('hy2_theme') || 'auto';
+
+applyTheme(currentTheme);
+
+if(window.matchMedia){
+
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(){
+
+        if(localStorage.getItem('hy2_theme') === 'auto' || !localStorage.getItem('hy2_theme')){
+
+            applyTheme('auto');
+
+        }
+
+    });
+
+}
+
+
+
+
+
+// ---------- 出站节点连通性与出口 IP 测试 ----------
+
+function testOutboundNode(idx, btn){
+
+    var ob = currentConfig.outbounds[idx];
+
+    if(!ob) return;
+
+    var resBox = document.getElementById('ob-test-' + idx);
+
+    if(btn){
+
+        btn.textContent = '⏳ 测试中...';
+
+        btn.disabled = true;
+
+    }
+
+    if(resBox) resBox.innerHTML = '<span style="color:var(--text-muted);font-size:11px">正在探测出口 IP 与延迟...</span>';
+
+    
+
+    fetch('/api/outbound/test', {
+
+        method: 'POST',
+
+        headers: {'Content-Type': 'application/json'},
+
+        body: JSON.stringify(ob)
+
+    }).then(r=>r.json()).then(d=>{
+
+        if(btn){
+
+            btn.textContent = '⚡ 测试';
+
+            btn.disabled = false;
+
+        }
+
+        if(!resBox) return;
+
+        if(d.success){
+
+            var warpBadge = (d.warp === 'on') ? ' <span class="warp-tag">WARP</span>' : '';
+
+            var locStr = d.loc ? (' (' + d.loc + (d.colo ? ' · ' + d.colo : '') + ')') : '';
+
+            resBox.innerHTML = '<span class="ob-test-badge ok"><span style="color:var(--success)">●</span> ' +
+
+                escapeHtml(d.ip) + locStr + ' · ' + d.delay + 'ms' + warpBadge + '</span>';
+
+        } else {
+
+            resBox.innerHTML = '<span class="ob-test-badge err"><span style="color:var(--danger)">●</span> ' +
+
+                escapeHtml(d.error || '连接超时') + '</span>';
+
+        }
+
+    }).catch(function(e){
+
+        if(btn){ btn.textContent = '⚡ 测试'; btn.disabled = false; }
+
+        if(resBox) resBox.innerHTML = '<span class="ob-test-badge err">● 测试请求失败</span>';
+
+    });
+
+}
+
+
+
+function testAllOutbounds(){
+
+    var list = (currentConfig && currentConfig.outbounds) || [];
+
+    if(list.length === 0){
+
+        showAlert('暂无出站节点可测试', 'info');
+
+        return;
+
+    }
+
+    showAlert('正在依次测试全部 ' + list.length + ' 个出站节点...', 'info');
+
+    var i = 0;
+
+    function next(){
+
+        if(i >= list.length){
+
+            showAlert('全部节点测试完成！', 'ok');
+
+            return;
+
+        }
+
+        var curIdx = i;
+
+        var btn = document.querySelector('#ob-card-' + curIdx + ' .btn-test-ob');
+
+        testOutboundNode(curIdx, btn);
+
+        i++;
+
+        setTimeout(next, 400);
+
+    }
+
+    next();
+
+}
+
+
+
+// ---------- WARP 工具箱状态与控制 ----------
+
+function checkWarpStatus(manual){
+
+    if(manual) showAlert('正在探测 WARP 出站状态与出口 IP...', 'info');
+
+    fetch('/api/warp/status').then(r=>r.json()).then(d=>{
+
+        var sBadge = document.getElementById('warp-service-badge');
+
+        var sTxt = document.getElementById('warp-service-text');
+
+        var hBadge = document.getElementById('warp-hy2-status-badge');
+
+        var tInfo = document.getElementById('warp-trace-info');
+
+        var tTag = document.getElementById('warp-trace-tag');
+
+        
+
+        if(sBadge && sTxt){
+
+            if(d.running){
+
+                sBadge.className = 'badge-status';
+
+                sTxt.textContent = '运行中';
+
+            } else {
+
+                sBadge.className = 'badge-status stopped';
+
+                sTxt.textContent = '已停止';
+
+            }
+
+        }
+
+        
+
+        if(hBadge){
+
+            if(d.hy2_warp_global){
+
+                hBadge.className = 'badge-status';
+
+                hBadge.style.color = '#38bdf8';
+
+                hBadge.style.borderColor = 'rgba(56,189,248,0.4)';
+
+                hBadge.style.background = 'rgba(56,189,248,0.15)';
+
+                hBadge.textContent = '🚀 全局走 WARP';
+
+            } else if(d.hy2_has_warp){
+
+                hBadge.className = 'badge-status';
+
+                hBadge.style.color = '#a78bfa';
+
+                hBadge.style.borderColor = 'rgba(167,139,250,0.4)';
+
+                hBadge.style.background = 'rgba(167,139,250,0.15)';
+
+                hBadge.textContent = '🎬 解锁分流走 WARP';
+
+            } else {
+
+                hBadge.className = 'badge-status stopped';
+
+                hBadge.textContent = '未接入 Hy2 分流';
+
+            }
+
+        }
+
+        
+
+        if(tInfo && tTag){
+
+            if(d.trace && d.trace.success){
+
+                var loc = d.trace.loc ? (' · 地区: ' + d.trace.loc + ' (' + d.trace.colo + ')') : '';
+
+                tInfo.innerHTML = '<b style="color:var(--success)">WARP 出站 IP: ' + escapeHtml(d.trace.ip) + '</b>' + loc + ' · 延迟 ' + d.trace.delay + 'ms';
+
+                tTag.innerHTML = '<span class="warp-tag">WARP ON</span>';
+
+                if(manual) showAlert('WARP 出站探测成功！出口 IP: ' + d.trace.ip, 'ok');
+
+            } else {
+
+                tInfo.textContent = '无法通过 WARP (127.0.0.1:40000) 访问外部网络: ' + ((d.trace && d.trace.error) || '连接失败');
+
+                tTag.innerHTML = '';
+
+                if(manual) showAlert('WARP 探测失败: ' + ((d.trace && d.trace.error) || '未响应'), 'err');
+
+            }
+
+        }
+
+    }).catch(function(e){
+
+        if(manual) showAlert('请求失败: ' + e, 'err');
+
+    });
+
+}
+
+
+
+function controlWarp(action){
+
+    var n = {restart: '重启', re_register: '重新注册获取新账号与IP'};
+
+    showAlert('正在' + (n[action]||action) + ' WARP 服务...', 'info');
+
+    fetch('/api/warp/control', {
+
+        method: 'POST',
+
+        headers: {'Content-Type': 'application/json'},
+
+        body: JSON.stringify({action: action})
+
+    }).then(r=>r.json()).then(d=>{
+
+        if(d.success){
+
+            showAlert('操作成功: ' + (d.message||'WARP 服务已更新'), 'ok');
+
+            setTimeout(function(){ checkWarpStatus(false); }, 1500);
+
+        } else {
+
+            showAlert('操作失败: ' + d.error, 'err');
+
+        }
+
+    }).catch(function(e){ showAlert('请求异常: ' + e, 'err'); });
+
+}
+
+
+
+function toggleHy2Warp(mode){
+
+    var msg = (mode === 'global') ? '一键启用全局走 WARP' : ((mode === 'unlock') ? '一键启用流媒体/AI 解锁分流' : '关闭 WARP 分流');
+
+    showAlert('正在配置: ' + msg + ' 并重启 Hysteria 2...', 'info');
+
+    fetch('/api/warp/toggle_hy2', {
+
+        method: 'POST',
+
+        headers: {'Content-Type': 'application/json'},
+
+        body: JSON.stringify({mode: mode})
+
+    }).then(r=>r.json()).then(d=>{
+
+        if(d.success){
+
+            showAlert('✅ ' + msg + ' 成功并已生效！', 'ok');
+
+            loadAllConfig();
+
+            setTimeout(function(){ checkWarpStatus(false); }, 1500);
+
+        } else {
+
+            showAlert('❌ 配置失败: ' + d.error, 'err');
+
+        }
+
+    }).catch(function(e){ showAlert('请求异常: ' + e, 'err'); });
+
+}
+
+
+
+
+
+
+
+// ---------- 全局状态 ----------
+
+var currentConfig = null;
+
+var activeViewMode = 'gui';
+
+var activeSubTab = 'server';
+
+var serverPublicIp = location.hostname;
+
+
+
+// ---------- 模态弹窗控制 ----------
+
+function openModal(id){
+
+    document.getElementById(id).classList.add('show');
+
+}
+
+function closeModal(id){
+
+    document.getElementById(id).classList.remove('show');
+
+}
+
+
+
+// ---------- 视图切换 ----------
+
+
+async function updateHy2() {
+    if(!confirm("确定要使用官方脚本将 Hysteria 2 更新到最新版本吗？\n更新完成后服务会自动重启。")) return;
+    
+    document.getElementById('modal-update').classList.add('show');
+    let logBox = document.getElementById('update-log-box');
+    logBox.textContent = '正在执行: bash <(curl -fsSL https://get.hy2.sh/)\n请耐心等待 (约需10-30秒)......\n\n';
+    
+    document.getElementById('btn-update-close').style.display = 'none';
+    
+    try {
+        let r = await fetch('/api/hy2/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+        let res = await r.json();
+        
+        logBox.textContent += res.log;
+        
+        if(res.success) {
+            logBox.textContent += '\n\n✅ 更新成功完成！请关闭并刷新页面。';
+        } else {
+            logBox.textContent += '\n\n❌ 更新失败，请检查上面日志。';
+        }
+    } catch(e) {
+        logBox.textContent += '\n\n❌ 网络请求错误: ' + e;
+    }
+    document.getElementById('btn-update-close').style.display = 'inline-flex';
+}
+
+function switchViewMode(mode){
+
+    activeViewMode = mode;
+
+    document.getElementById('tab-btn-gui').classList.toggle('active', mode === 'gui');
+
+    document.getElementById('tab-btn-raw').classList.toggle('active', mode === 'raw');
+
+    document.getElementById('gui-subtabs').style.display = (mode === 'gui') ? 'flex' : 'none';
+
+    document.getElementById('gui-container').style.display = (mode === 'gui') ? 'flex' : 'none';
+
+    document.getElementById('raw-pane').classList.toggle('active', mode === 'raw');
+
+    
+
+    if (mode === 'raw') {
+
+        syncGuiToRawYaml();
+
+    }
+
+}
+
+
+
+function switchSubTab(sub){
+
+    activeSubTab = sub;
+
+    ['server','outbounds','acl','quic','warp','export'].forEach(function(s){
+
+        document.getElementById('subtab-btn-' + s).classList.toggle('active', s === sub);
+
+        document.getElementById('pane-' + s).classList.toggle('active', s === sub);
+
+    });
+
+    if(sub === 'export'){
+
+        updateExportOutputs();
+
+    }
+
+    if(sub === 'warp'){
+
+        checkWarpStatus(false);
+
+    }
+
+}
+
+
+
+// ---------- 提示条 ----------
+
+function showAlert(msg, type){
+
+    var b = document.getElementById('alert-box');
+
+    b.textContent = msg;
+
+    b.className = 'show alert-' + type;
+
+    clearTimeout(b._t);
+
+    if(type !== 'info') b._t = setTimeout(function(){ b.className = ''; }, 3500);
+
+}
+
+
+
+// ---------- 密码与输入工具 ----------
+
+function togglePassVisibility(id){
+
+    var el = document.getElementById(id);
+
+    el.type = (el.type === 'password') ? 'text' : 'password';
+
+}
+
+function generateRandomPass(id){
+
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+
+    var res = '';
+
+    for(var i=0; i<16; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    document.getElementById(id).value = res;
+
+    document.getElementById(id).type = 'text';
+
+    showAlert('已生成强随机密码', 'ok');
+
+}
+
+function generateRandomSecret(id){
+
+    var hex = '0123456789abcdef';
+
+    var res = '';
+
+    for(var i=0; i<64; i++) res += hex.charAt(Math.floor(Math.random() * hex.length));
+
+    document.getElementById(id).value = res;
+
+    showAlert('已生成64位全新 Secret 密钥', 'ok');
+
+}
+
+function copyValue(id){
+
+    var el = document.getElementById(id);
+
+    el.select();
+
+    navigator.clipboard.writeText(el.value).then(function(){
+
+        showAlert('✅ 已复制到剪贴板', 'ok');
+
+    }).catch(function(){
+
+        document.execCommand('copy');
+
+        showAlert('✅ 已复制到剪贴板', 'ok');
+
+    });
+
+}
+
+function setPresetPort(p){
+
+    document.getElementById('gui-listen').value = ':' + p;
+
+}
+
+
+
+// ---------- 加载全部配置 ----------
+
+function loadAllConfig(){
+
+    fetch('/api/config/parsed').then(r=>r.json()).then(d=>{
+
+        if(!d.success){
+
+            showAlert('加载配置失败: ' + (d.error||'未知错误'), 'err');
+
+            return;
+
+        }
+
+        currentConfig = d.config;
+
+        if(d.server_ip) serverPublicIp = d.server_ip;
+
+        
+
+        // 渲染基础与网络
+
+        document.getElementById('gui-listen').value = currentConfig.listen || ':51235';
+
+        document.getElementById('gui-password').value = (currentConfig.auth && currentConfig.auth.password) || '';
+
+        document.getElementById('gui-tls-cert').value = (currentConfig.tls && currentConfig.tls.cert) || '/etc/hysteria/cert.crt';
+
+        document.getElementById('gui-tls-key').value = (currentConfig.tls && currentConfig.tls.key) || '/etc/hysteria/private.key';
+
+        document.getElementById('gui-tls-sni').value = (currentConfig.tls && currentConfig.tls.sni) || '';
+
+        
+
+        var m = currentConfig.masquerade || {};
+
+        document.getElementById('gui-masq-type').value = m.type || 'proxy';
+
+        var mp = m.proxy || {};
+
+        document.getElementById('gui-masq-url').value = mp.url || 'https://maimai.sega.jp';
+
+        document.getElementById('gui-masq-rewrite').checked = (mp.rewriteHost !== false);
+
+        
+
+        var ts = currentConfig.trafficStats || {};
+
+        document.getElementById('gui-stats-listen').value = ts.listen || '127.0.0.1:19999';
+
+        document.getElementById('gui-stats-secret').value = ts.secret || '';
+
+        
+
+        // 渲染 QUIC 与限速
+
+        var q = currentConfig.quic || {};
+
+        document.getElementById('gui-quic-init-stream').value = q.initStreamReceiveWindow || 16777216;
+
+        document.getElementById('gui-quic-max-stream').value = q.maxStreamReceiveWindow || 16777216;
+
+        document.getElementById('gui-quic-init-conn').value = q.initConnReceiveWindow || 33554432;
+
+        document.getElementById('gui-quic-max-conn').value = q.maxConnReceiveWindow || 33554432;
+
+        
+
+        var bw = currentConfig.bandwidth || {};
+
+        document.getElementById('gui-bw-up').value = bw.up || '';
+
+        document.getElementById('gui-bw-down').value = bw.down || '';
+
+        document.getElementById('gui-bw-ignore').checked = !!currentConfig.ignoreClientBandwidth;
+
+        
+
+        // 渲染列表
+
+        renderOutboundsList();
+
+        renderAclList();
+
+        updateExportOutputs();
+
+        
+
+        // 原始 YAML 赋值
+
+        document.getElementById('config-editor').value = d.raw || '';
+
+    }).catch(function(e){
+
+        showAlert('无法获取配置文件: ' + e, 'err');
+
+    });
+
+}
+
+
+
+// ---------- 出站列表渲染 ----------
+
+function renderOutboundsList(){
+
+    var container = document.getElementById('outbound-cards-container');
+
+    container.innerHTML = '';
+
+    var list = (currentConfig && currentConfig.outbounds) || [];
+
+    document.getElementById('count-ob').textContent = list.length;
+
+    
+
+    if(list.length === 0){
+
+        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text-muted)">暂无出站节点，点击上方按钮添加</div>';
+
+        return;
+
+    }
+
+    
+
+    list.forEach(function(ob, idx){
+
+        var card = document.createElement('div');
+
+        card.className = 'ob-card';
+
+        
+
+        var top = document.createElement('div');
+
+        top.className = 'ob-card-top';
+
+        top.innerHTML = '<span class="ob-name">' + escapeHtml(ob.name) + '</span>' +
+
+                        '<span class="ob-badge ' + ob.type + '">' + ob.type.toUpperCase() + '</span>';
+
+        card.appendChild(top);
+
+        
+
+        var details = document.createElement('div');
+
+        details.className = 'ob-details';
+
+        if(ob.type === 'socks5'){
+
+            var s5 = ob.socks5 || {};
+
+            details.innerHTML = '<div>&#127760; ' + escapeHtml(s5.addr || '-') + '</div>' +
+
+                                '<div>&#128100; ' + (s5.username ? escapeHtml(s5.username) : '<span style="color:#64748b">无认证</span>') + '</div>';
+
+        } else if(ob.type === 'direct'){
+
+            var d = ob.direct || {};
+
+            var modeText = (d.mode == 6) ? '仅 IPv6' : (d.mode == 4 ? '仅 IPv4' : '自动');
+
+            details.innerHTML = '<div>&#128260; 模式: <b>' + modeText + '</b></div>';
+
+        } else if(ob.type === 'http'){
+
+            var h = ob.http || {};
+
+            details.innerHTML = '<div>&#127760; ' + escapeHtml(h.addr || '-') + '</div>';
+
+        }
+
+        card.appendChild(details);
+
+        
+
+        card.id = 'ob-card-' + idx;
+
+        var testRes = document.createElement('div');
+
+        testRes.className = 'ob-test-result';
+
+        testRes.id = 'ob-test-' + idx;
+
+        card.appendChild(testRes);
+
+
+
+        var act = document.createElement('div');
+
+        act.className = 'ob-actions';
+
+        act.innerHTML = '<button class="btn-mini btn-test-ob" onclick="testOutboundNode(' + idx + ', this)">&#9889; 测试</button>' +
+
+                        '<button class="btn-mini" onclick="editOutbound(' + idx + ')">&#9999;&#65039; 编辑</button>' +
+
+                        '<button class="btn-mini" style="color:var(--danger)" onclick="deleteOutbound(' + idx + ')">&#128465;&#65039; 删除</button>';
+
+        card.appendChild(act);
+
+        
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+
+function openAddOutboundModal(){
+
+    document.getElementById('modal-ob-title').textContent = '添加出站节点';
+
+    document.getElementById('modal-ob-idx').value = '-1';
+
+    document.getElementById('modal-ob-name').value = '';
+
+    document.getElementById('modal-ob-type').value = 'socks5';
+
+    document.getElementById('modal-ob-addr').value = '';
+
+    document.getElementById('modal-ob-user').value = '';
+
+    document.getElementById('modal-ob-pass').value = '';
+
+    document.getElementById('modal-ob-mode').value = '4';
+
+    updateOutboundModalFields();
+
+    openModal('modal-outbound');
+
+}
+
+
+
+function editOutbound(idx){
+
+    var ob = currentConfig.outbounds[idx];
+
+    if(!ob) return;
+
+    document.getElementById('modal-ob-title').textContent = '编辑出站节点';
+
+    document.getElementById('modal-ob-idx').value = idx;
+
+    document.getElementById('modal-ob-name').value = ob.name;
+
+    document.getElementById('modal-ob-type').value = ob.type;
+
+    if(ob.type === 'socks5'){
+
+        var s5 = ob.socks5 || {};
+
+        document.getElementById('modal-ob-addr').value = s5.addr || '';
+
+        document.getElementById('modal-ob-user').value = s5.username || '';
+
+        document.getElementById('modal-ob-pass').value = s5.password || '';
+
+    } else if(ob.type === 'direct'){
+
+        var d = ob.direct || {};
+
+        document.getElementById('modal-ob-mode').value = d.mode || '4';
+
+    } else if(ob.type === 'http'){
+
+        var h = ob.http || {};
+
+        document.getElementById('modal-ob-addr').value = h.addr || '';
+
+        document.getElementById('modal-ob-user').value = h.username || '';
+
+        document.getElementById('modal-ob-pass').value = h.password || '';
+
+    }
+
+    updateOutboundModalFields();
+
+    openModal('modal-outbound');
+
+}
+
+
+
+function updateOutboundModalFields(){
+
+    var t = document.getElementById('modal-ob-type').value;
+
+    document.getElementById('modal-ob-proxy-fields').style.display = (t === 'socks5' || t === 'http') ? 'flex' : 'none';
+
+    document.getElementById('modal-ob-direct-fields').style.display = (t === 'direct') ? 'flex' : 'none';
+
+}
+
+
+
+function saveOutboundModal(){
+
+    var idx = parseInt(document.getElementById('modal-ob-idx').value);
+
+    var name = document.getElementById('modal-ob-name').value.trim();
+
+    var type = document.getElementById('modal-ob-type').value;
+
+    if(!name){
+
+        showAlert('请输入节点标识名称', 'err');
+
+        return;
+
+    }
+
+    
+
+    var ob = {name: name, type: type};
+
+    if(type === 'socks5'){
+
+        var addr = document.getElementById('modal-ob-addr').value.trim();
+
+        if(!addr){ showAlert('请输入服务器地址', 'err'); return; }
+
+        ob.socks5 = {
+
+            addr: addr,
+
+            username: document.getElementById('modal-ob-user').value.trim(),
+
+            password: document.getElementById('modal-ob-pass').value.trim()
+
+        };
+
+    } else if(type === 'direct'){
+
+        var mode = document.getElementById('modal-ob-mode').value;
+
+        ob.direct = { mode: (mode === '4' ? 4 : (mode === '6' ? 6 : 'auto')) };
+
+    } else if(type === 'http'){
+
+        var addr2 = document.getElementById('modal-ob-addr').value.trim();
+
+        if(!addr2){ showAlert('请输入服务器地址', 'err'); return; }
+
+        ob.http = {
+
+            addr: addr2,
+
+            username: document.getElementById('modal-ob-user').value.trim(),
+
+            password: document.getElementById('modal-ob-pass').value.trim()
+
+        };
+
+    }
+
+    
+
+    if(!currentConfig.outbounds) currentConfig.outbounds = [];
+
+    if(idx >= 0){
+
+        currentConfig.outbounds[idx] = ob;
+
+    } else {
+
+        currentConfig.outbounds.push(ob);
+
+    }
+
+    closeModal('modal-outbound');
+
+    renderOutboundsList();
+
+    showAlert('已更新出站节点列表，记得点击右上角保存！', 'ok');
+
+}
+
+
+
+function deleteOutbound(idx){
+
+    if(!confirm('确定要删除出站节点 ' + currentConfig.outbounds[idx].name + ' 吗？')) return;
+
+    currentConfig.outbounds.splice(idx, 1);
+
+    renderOutboundsList();
+
+    showAlert('出站节点已移除', 'ok');
+
+}
+
+
+
+// ---------- ACL 规则渲染 ----------
+
+function renderAclList(){
+
+    var tbody = document.getElementById('acl-table-body');
+
+    tbody.innerHTML = '';
+
+    var rules = (currentConfig && currentConfig.acl && currentConfig.acl.rules) || [];
+
+    document.getElementById('count-acl').textContent = rules.length;
+
+    
+
+    if(rules.length === 0){
+
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">暂无 ACL 分流规则，点击右上角添加</td></tr>';
+
+        return;
+
+    }
+
+    
+
+    rules.forEach(function(r, idx){
+
+        var tr = document.createElement('tr');
+
+        tr.innerHTML = '<td>#' + (idx + 1) + '</td>' +
+
+            '<td><div style="display:flex;gap:2px">' +
+
+                '<button class="btn-mini" onclick="moveAcl(' + idx + ',-1)" title="上移" ' + (idx===0?'disabled style="opacity:0.3"':'') + '>&#9650;</button>' +
+
+                '<button class="btn-mini" onclick="moveAcl(' + idx + ',1)" title="下移" ' + (idx===rules.length-1?'disabled style="opacity:0.3"':'') + '>&#9660;</button>' +
+
+            '</div></td>' +
+
+            '<td><span class="acl-tag">' + escapeHtml(r.outbound || '(直连/兜底)') + '</span></td>' +
+
+            '<td>' + escapeHtml(r.rule || '') + '</td>' +
+
+            '<td style="text-align:right">' +
+
+                '<button class="btn-mini" onclick="editAcl(' + idx + ')">&#9999;&#65039;</button> ' +
+
+                '<button class="btn-mini" style="color:var(--danger)" onclick="deleteAcl(' + idx + ')">&#128465;&#65039;</button>' +
+
+            '</td>';
+
+        tbody.appendChild(tr);
+
+    });
+
+}
+
+
+
+function moveAcl(idx, dir){
+
+    var rules = currentConfig.acl.rules;
+
+    var target = idx + dir;
+
+    if(target < 0 || target >= rules.length) return;
+
+    var tmp = rules[idx];
+
+    rules[idx] = rules[target];
+
+    rules[target] = tmp;
+
+    renderAclList();
+
+}
+
+
+
+function openAddAclModal(){
+
+    populateAclOutboundOptions();
+
+    document.getElementById('modal-acl-title').textContent = '添加分流规则';
+
+    document.getElementById('modal-acl-idx').value = '-1';
+
+    document.getElementById('modal-acl-rule').value = '';
+
+    document.getElementById('modal-acl-helper').value = '';
+
+    openModal('modal-acl');
+
+}
+
+
+
+function editAcl(idx){
+
+    populateAclOutboundOptions();
+
+    var r = currentConfig.acl.rules[idx];
+
+    if(!r) return;
+
+    document.getElementById('modal-acl-title').textContent = '编辑分流规则';
+
+    document.getElementById('modal-acl-idx').value = idx;
+
+    document.getElementById('modal-acl-outbound').value = r.outbound;
+
+    document.getElementById('modal-acl-rule').value = r.rule;
+
+    openModal('modal-acl');
+
+}
+
+
+
+function populateAclOutboundOptions(){
+
+    var sel = document.getElementById('modal-acl-outbound');
+
+    sel.innerHTML = '';
+
+    var list = (currentConfig && currentConfig.outbounds) || [];
+
+    list.forEach(function(ob){
+
+        var opt = document.createElement('option');
+
+        opt.value = ob.name;
+
+        opt.textContent = ob.name + ' (' + ob.type + ')';
+
+        sel.appendChild(opt);
+
+    });
+
+    // 内置直连动作
+
+    var opt1 = document.createElement('option'); opt1.value = 'direct_v4'; opt1.textContent = 'direct_v4 (IPv4 直连)'; sel.appendChild(opt1);
+
+    var opt2 = document.createElement('option'); opt2.value = 'direct_v6'; opt2.textContent = 'direct_v6 (IPv6 直连)'; sel.appendChild(opt2);
+
+    var opt3 = document.createElement('option'); opt3.value = 'direct'; opt3.textContent = 'direct (直连)'; sel.appendChild(opt3);
+
+    var opt4 = document.createElement('option'); opt4.value = 'reject'; opt4.textContent = 'reject (拦截拒绝)'; sel.appendChild(opt4);
+
+}
+
+
+
+function applyAclHelper(){
+
+    var v = document.getElementById('modal-acl-helper').value;
+
+    if(v) document.getElementById('modal-acl-rule').value = v;
+
+}
+
+
+
+function saveAclModal(){
+
+    var idx = parseInt(document.getElementById('modal-acl-idx').value);
+
+    var ob = document.getElementById('modal-acl-outbound').value;
+
+    var rule = document.getElementById('modal-acl-rule').value.trim();
+
+    if(!rule){ showAlert('请输入匹配表达式', 'err'); return; }
+
+    
+
+    var r = {outbound: ob, rule: rule, raw: ob + '(' + rule + ')'};
+
+    if(!currentConfig.acl) currentConfig.acl = {rules: []};
+
+    if(!currentConfig.acl.rules) currentConfig.acl.rules = [];
+
+    
+
+    if(idx >= 0){
+
+        currentConfig.acl.rules[idx] = r;
+
+    } else {
+
+        currentConfig.acl.rules.push(r);
+
+    }
+
+    closeModal('modal-acl');
+
+    renderAclList();
+
+    showAlert('分流规则已更新，记得点击右上角保存！', 'ok');
+
+}
+
+
+
+function deleteAcl(idx){
+
+    if(!confirm('确定要删除该分流规则吗？')) return;
+
+    currentConfig.acl.rules.splice(idx, 1);
+
+    renderAclList();
+
+}
+
+
+
+// ---------- 调优预设 ----------
+
+function applyQuicPreset(type){
+
+    if(type === 'extreme'){
+
+        document.getElementById('gui-quic-init-stream').value = 16777216;
+
+        document.getElementById('gui-quic-max-stream').value = 16777216;
+
+        document.getElementById('gui-quic-init-conn').value = 33554432;
+
+        document.getElementById('gui-quic-max-conn').value = 33554432;
+
+        showAlert('已载入极致性能预设方案 (16M/16M/32M/32M)', 'ok');
+
+    } else if(type === 'balanced'){
+
+        document.getElementById('gui-quic-init-stream').value = 8388608;
+
+        document.getElementById('gui-quic-max-stream').value = 8388608;
+
+        document.getElementById('gui-quic-init-conn').value = 16777216;
+
+        document.getElementById('gui-quic-max-conn').value = 16777216;
+
+        showAlert('已载入标准均衡方案 (8M/8M/16M/16M)', 'ok');
+
+    } else if(type === 'light'){
+
+        document.getElementById('gui-quic-init-stream').value = 2097152;
+
+        document.getElementById('gui-quic-max-stream').value = 4194304;
+
+        document.getElementById('gui-quic-init-conn').value = 4194304;
+
+        document.getElementById('gui-quic-max-conn').value = 8388608;
+
+        showAlert('已载入低内存方案 (2M/4M/4M/8M)', 'ok');
+
+    }
+
+}
+
+
+
+// ---------- 节点分享导出 ----------
+
+function updateExportOutputs(){
+
+    var listen = document.getElementById('gui-listen').value || ':51235';
+
+    var port = listen.replace(/.*:/, '') || '51235';
+
+    var pass = document.getElementById('gui-password').value || '';
+
+    var host = serverPublicIp;
+
+    var sni = document.getElementById('gui-tls-sni').value || '';
+
+    
+
+    // URI
+
+    var uri = 'hysteria2://' + encodeURIComponent(pass) + '@' + host + ':' + port + '/?insecure=1' + (sni ? '&sni=' + encodeURIComponent(sni) : '') + '#Hysteria2-Server';
+
+    document.getElementById('export-uri').value = uri;
+
+    
+
+    // Clash Meta
+
+    var clashLines = [
+
+        '- name: "Hysteria2-Node"',
+
+        '  type: hysteria2',
+
+        '  server: ' + host,
+
+        '  port: ' + port,
+
+        '  password: "' + pass + '"',
+
+        '  skip-cert-verify: true'
+
+    ];
+
+    if(sni) clashLines.push('  sni: ' + sni);
+
+    document.getElementById('export-clash').value = clashLines.join(String.fromCharCode(10));
+
+    
+
+    // Sing-box
+
+    var sb = JSON.stringify({
+
+        type: 'hysteria2',
+
+        tag: 'hy2-out',
+
+        server: host,
+
+        server_port: parseInt(port),
+
+        password: pass,
+
+        tls: {
+
+            enabled: true,
+
+            insecure: true,
+
+            server_name: sni || undefined
+
+        }
+
+    }, null, 2);
+
+    document.getElementById('export-singbox').value = sb;
+
+}
+
+
+
+// ---------- 收集当前 GUI 配置并转为 JSON ----------
+
+function collectGuiConfig(){
+
+    if(!currentConfig) currentConfig = {};
+
+    currentConfig.listen = document.getElementById('gui-listen').value.trim() || ':51235';
+
+    
+
+    if(!currentConfig.auth) currentConfig.auth = {type: 'password'};
+
+    currentConfig.auth.password = document.getElementById('gui-password').value;
+
+    
+
+    if(!currentConfig.tls) currentConfig.tls = {};
+
+    currentConfig.tls.cert = document.getElementById('gui-tls-cert').value.trim();
+
+    currentConfig.tls.key = document.getElementById('gui-tls-key').value.trim();
+
+    currentConfig.tls.sni = document.getElementById('gui-tls-sni').value.trim();
+
+    
+
+    if(!currentConfig.masquerade) currentConfig.masquerade = {};
+
+    currentConfig.masquerade.type = document.getElementById('gui-masq-type').value;
+
+    if(currentConfig.masquerade.type === 'proxy'){
+
+        currentConfig.masquerade.proxy = {
+
+            url: document.getElementById('gui-masq-url').value.trim(),
+
+            rewriteHost: document.getElementById('gui-masq-rewrite').checked
+
+        };
+
+    }
+
+    
+
+    if(!currentConfig.quic) currentConfig.quic = {};
+
+    currentConfig.quic.initStreamReceiveWindow = parseInt(document.getElementById('gui-quic-init-stream').value) || 16777216;
+
+    currentConfig.quic.maxStreamReceiveWindow = parseInt(document.getElementById('gui-quic-max-stream').value) || 16777216;
+
+    currentConfig.quic.initConnReceiveWindow = parseInt(document.getElementById('gui-quic-init-conn').value) || 33554432;
+
+    currentConfig.quic.maxConnReceiveWindow = parseInt(document.getElementById('gui-quic-max-conn').value) || 33554432;
+
+    
+
+    if(!currentConfig.bandwidth) currentConfig.bandwidth = {};
+
+    currentConfig.bandwidth.up = document.getElementById('gui-bw-up').value.trim();
+
+    currentConfig.bandwidth.down = document.getElementById('gui-bw-down').value.trim();
+
+    currentConfig.ignoreClientBandwidth = document.getElementById('gui-bw-ignore').checked;
+
+    
+
+    if(!currentConfig.trafficStats) currentConfig.trafficStats = {};
+
+    currentConfig.trafficStats.listen = document.getElementById('gui-stats-listen').value.trim();
+
+    currentConfig.trafficStats.secret = document.getElementById('gui-stats-secret').value.trim();
+
+    
+
+    return currentConfig;
+
+}
+
+
+
+// ---------- 同步 GUI 到 Raw YAML 预览 ----------
+
+function syncGuiToRawYaml(){
+
+    var cfg = collectGuiConfig();
+
+    fetch('/api/config/preview_yaml', {
+
+        method: 'POST',
+
+        headers: {'Content-Type': 'application/json'},
+
+        body: JSON.stringify({config: cfg})
+
+    }).then(r=>r.json()).then(d=>{
+
+        if(d.success){
+
+            document.getElementById('config-editor').value = d.yaml;
+
+        }
+
+    }).catch(function(){});
+
+}
+
+
+
+// ---------- 保存配置 ----------
+
+function saveActiveConfig(restartService){
+
+    if(activeViewMode === 'gui'){
+
+        var cfg = collectGuiConfig();
+
+        showAlert('⏳ 正在保存配置...', 'info');
+
+        fetch('/api/config/gui', {
+
+            method: 'POST',
+
+            headers: {'Content-Type': 'application/json'},
+
+            body: JSON.stringify({config: cfg, restart: restartService})
+
+        }).then(r=>r.json()).then(d=>{
+
+            if(d.success){
+
+                showAlert(restartService ? '✅ 配置已保存并成功重启服务！' : '✅ 配置已成功保存！', 'ok');
+
+                setTimeout(updateStatus, 1500);
+
+            } else {
+
+                showAlert('❌ 保存失败: ' + d.error, 'err');
+
+            }
+
+        }).catch(function(e){ showAlert('❌ 请求失败: ' + e, 'err'); });
+
+    } else {
+
+        var content = document.getElementById('config-editor').value;
+
+        showAlert('⏳ 正在保存原始配置...', 'info');
+
+        fetch('/api/config', {
+
+            method: 'POST',
+
+            headers: {'Content-Type': 'application/json'},
+
+            body: JSON.stringify({content: content, restart: restartService})
+
+        }).then(r=>r.json()).then(d=>{
+
+            if(d.success){
+
+                showAlert(restartService ? '✅ 原始 YAML 已保存并成功重启服务！' : '✅ 原始 YAML 已成功保存！', 'ok');
+
+                loadAllConfig();
+
+                setTimeout(updateStatus, 1500);
+
+            } else {
+
+                showAlert('❌ 保存失败: ' + d.error, 'err');
+
+            }
+
+        }).catch(function(e){ showAlert('❌ 请求失败: ' + e, 'err'); });
+
+    }
+
+}
+
+
+
+// ---------- 服务控制 ----------
+
+function controlService(action){
+
+    var n = {start: '开启', stop: '关闭', restart: '重启'};
+
+    showAlert('⏳ 正在' + n[action] + '服务...', 'info');
+
+    fetch('/api/service', {
+
+        method: 'POST',
+
+        headers: {'Content-Type': 'application/json'},
+
+        body: JSON.stringify({action: action})
+
+    }).then(r=>r.json()).then(d=>{
+
+        showAlert(d.success ? '✅ ' + d.message : '❌ ' + d.message, d.success ? 'ok' : 'err');
+
+        setTimeout(updateStatus, 1500);
+
+    }).catch(function(){ showAlert('❌ 请求失败', 'err'); });
+
+}
+
+
+
+function updateStatus(){
+
+    fetch('/api/status').then(r=>r.json()).then(d=>{
+
+        var badge = document.getElementById('status-badge');
+
+        var txt = document.getElementById('status-text');
+
+        if(d.running){
+
+            badge.className = 'badge-status';
+
+            txt.textContent = '运行中';
+
+        } else {
+
+            badge.className = 'badge-status stopped';
+
+            txt.textContent = '已停止';
+
+        }
+
+    }).catch(function(){
+
+        document.getElementById('status-badge').className = 'badge-status stopped';
+
+        document.getElementById('status-text').textContent = '离线 / 无法连接';
+
+    });
+
+}
+
+
+
+function updateSysinfo(){
+
+    fetch('/api/sysinfo').then(r=>r.json()).then(d=>{
+
+        document.getElementById('si-cpu').textContent = d.cpu + '%';
+
+        document.getElementById('si-mem').textContent = d.mem.used + 'M / ' + d.mem.total + 'M';
+
+        document.getElementById('si-disk').textContent = d.disk.used + ' / ' + d.disk.total;
+
+        document.getElementById('si-rx').textContent = d.net.rx;
+
+        document.getElementById('si-tx').textContent = d.net.tx;
+
+        document.getElementById('si-rx-speed').textContent = d.net.rx_speed;
+
+        document.getElementById('si-tx-speed').textContent = d.net.tx_speed;
+
+        document.getElementById('si-tcp').textContent = d.conn.tcp;
+
+        document.getElementById('si-udp').textContent = d.conn.udp;
+
+        document.getElementById('si-hyst-start').textContent = d.hyst_start;
+
+    }).catch(function(){});
+
+}
+
+
+
+// ---------- 日志与连接监控 ----------
+
+var monitorTab = 'log'; var connTimer = null;
+
+function switchMonitorTab(t){
+
+    monitorTab = t;
+
+    document.getElementById('tab-btn-log').classList.toggle('active', t === 'log');
+
+    document.getElementById('tab-btn-conn').classList.toggle('active', t === 'conn');
+
+    document.getElementById('log-content').style.display = (t === 'log') ? '' : 'none';
+
+    document.getElementById('conn-content').style.display = (t === 'conn') ? '' : 'none';
+
+    document.getElementById('log-controls').style.display = (t === 'log') ? '' : 'none';
+
+    document.getElementById('conn-controls').style.display = (t === 'conn') ? '' : 'none';
+
+    if(t === 'conn'){
+
+        loadStreams();
+
+        if(!connTimer) connTimer = setInterval(loadStreams, 3000);
+
+    } else if(connTimer){
+
+        clearInterval(connTimer); connTimer = null;
+
+    }
+
+}
+
+
+
+var logAutoRefresh = true; var logTimer = null; var logLines = []; var logSig = ''; var logCursor = null; var logSource = '';
+
+function renderLogCount(n, extra){
+
+    var now = new Date();
+
+    var ts = now.toTimeString().slice(0, 8);
+
+    document.getElementById('log-line-count').textContent = n + ' lines' + (logSource ? ' · ' + logSource : '') + ' | ' + ts + (extra||'');
+
+}
+
+function loadLogs(){
+
+    fetch('/api/logs').then(r=>r.json()).then(d=>{
+
+        if(!d || !Array.isArray(d.logs)) return;
+
+        logSource = d.source || '';
+
+        var lc = document.getElementById('log-content');
+
+        var lines = d.logs;
+
+        if(logCursor !== null){
+
+            var i = lines.lastIndexOf(logCursor);
+
+            lines = (i >= 0) ? lines.slice(i + 1) : lines;
+
+        }
+
+        var sig = lines.join(String.fromCharCode(0));
+
+        if(sig === logSig) return;
+
+        logSig = sig;
+
+        var oldHeight = lc.scrollHeight;
+
+        var atBottom = lc.scrollTop + lc.clientHeight >= oldHeight - 30;
+
+        lc.innerHTML = '';
+
+        logLines = lines;
+
+        lines.forEach(function(line){
+
+            var div = document.createElement('div');
+
+            div.style.padding = '1px 0';
+
+            div.textContent = line;
+
+            lc.appendChild(div);
+
+        });
+
+        renderLogCount(lines.length, logCursor !== null ? ' · 仅新增' : '');
+
+        if(atBottom && lines.length > 0) lc.scrollTop = lc.scrollHeight;
+
+    }).catch(function(){});
+
+}
+
+function clearLogs(){
+
+    logCursor = logLines.length ? logLines[logLines.length - 1] : null;
+
+    document.getElementById('log-content').innerHTML = '';
+
+    logSig = '';
+
+    renderLogCount(0, ' · 仅新增');
+
+}
+
+function toggleAutoRefresh(){
+
+    logAutoRefresh = !logAutoRefresh;
+
+    var btn = document.getElementById('log-auto-btn');
+
+    if(logAutoRefresh){
+
+        btn.textContent = '⏸️';
+
+        logSig = ''; logCursor = null;
+
+        loadLogs();
+
+        logTimer = setInterval(loadLogs, 3000);
+
+    } else {
+
+        btn.textContent = '▶️';
+
+        clearInterval(logTimer);
+
+    }
+
+}
+
+
+
+function fmtBytes(b){
+
+    b = Number(b) || 0;
+
+    if(b < 1024) return b + ' B';
+
+    var u = ['KB','MB','GB','TB'], i = -1;
+
+    while(b >= 1024 && i < u.length - 1){ b /= 1024; i++; }
+
+    return b.toFixed(1) + ' ' + u[i];
+
+}
+
+function fmtDur(s){
+
+    s = Math.max(0, Math.round(Number(s) || 0));
+
+    if(s < 60) return s + 's';
+
+    if(s < 3600) return Math.floor(s / 60) + 'm' + String(s % 60).padStart(2, '0') + 's';
+
+    return Math.floor(s / 3600) + 'h' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + 'm';
+
+}
+
+function loadStreams(){
+
+    fetch('/api/streams').then(r=>r.json()).then(d=>{
+
+        if(!d || !Array.isArray(d.targets)) return;
+
+        var box = document.getElementById('conn-content');
+
+        var stamp = document.getElementById('conn-updated');
+
+        box.textContent = '';
+
+        if(d.error){
+
+            var em = document.createElement('div');
+
+            em.className = 'conn-empty';
+
+            em.textContent = '统计 API 不可用: ' + d.error;
+
+            box.appendChild(em);
+
+            stamp.textContent = '';
+
+            return;
+
+        }
+
+        var now = new Date();
+
+        stamp.textContent = '活跃流 ' + d.live_count + ' · 目标 ' + d.target_count + ' · ' + now.toTimeString().slice(0, 8);
+
+        var tb = 0, rb = 0;
+
+        d.targets.forEach(function(x){ tb += x.tx; rb += x.rx; });
+
+        var s = document.createElement('div');
+
+        s.className = 'conn-summary';
+
+        [['上行合计', fmtBytes(tb)], ['下行合计', fmtBytes(rb)], ['合计', fmtBytes(tb + rb)]].forEach(function(p){
+
+            var sp = document.createElement('span');
+
+            sp.textContent = p[0] + ' ';
+
+            var b = document.createElement('b');
+
+            b.textContent = p[1];
+
+            sp.appendChild(b);
+
+            s.appendChild(sp);
+
+        });
+
+        box.appendChild(s);
+
+        if(!d.targets.length){
+
+            var e2 = document.createElement('div');
+
+            e2.className = 'conn-empty';
+
+            e2.textContent = '暂无连接记录';
+
+            box.appendChild(e2);
+
+            return;
+
+        }
+
+        var tbl = document.createElement('table');
+
+        tbl.className = 'conn-table';
+
+        var thead = document.createElement('thead');
+
+        thead.innerHTML = '<tr><th>目标地址</th><th style="text-align:right">流数</th><th style="text-align:right">上行</th><th style="text-align:right">下行</th><th style="text-align:right">合计</th><th style="text-align:right">最近活跃</th></tr>';
+
+        tbl.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+
+        d.targets.forEach(function(x){
+
+            var tr = document.createElement('tr');
+
+            tr.innerHTML = '<td>' + escapeHtml(x.target) + '</td>' +
+
+                '<td class="num">' + x.streams + '</td>' +
+
+                '<td class="num tx">' + fmtBytes(x.tx) + '</td>' +
+
+                '<td class="num rx">' + fmtBytes(x.rx) + '</td>' +
+
+                '<td class="num">' + fmtBytes(x.tx + x.rx) + '</td>' +
+
+                '<td class="num">' + fmtDur(x.idle) + '前</td>';
+
+            tbody.appendChild(tr);
+
+        });
+
+        tbl.appendChild(tbody);
+
+        box.appendChild(tbl);
+
+    }).catch(function(){});
+
+}
+
+
+
+function escapeHtml(s){
+
+    if(typeof s !== 'string') s = String(s||'');
+
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+}
+
+
+
+// ---------- 拖拽分割条 ----------
+
+(function(){
+
+    var divider = document.getElementById('divider');
+
+    if(!divider) return;
+
+    var main = document.querySelector('.main');
+
+    var left = document.querySelector('.main-left');
+
+    var right = document.querySelector('.main-right');
+
+    var isDragging = false;
+
+    divider.addEventListener('mousedown', function(){
+
+        isDragging = true;
+
+        divider.classList.add('active');
+
+        document.body.style.cursor = 'col-resize';
+
+        document.body.style.userSelect = 'none';
+
+    });
+
+    document.addEventListener('mousemove', function(e){
+
+        if(!isDragging) return;
+
+        var rect = main.getBoundingClientRect();
+
+        var offset = e.clientX - rect.left;
+
+        var pct = Math.max(25, Math.min(80, offset / rect.width * 100));
+
+        left.style.flex = '0 0 ' + (pct - 0.5) + '%';
+
+        right.style.width = '';
+
+        right.style.flex = '1 1 ' + (99.5 - pct) + '%';
+
+    });
+
+    document.addEventListener('mouseup', function(){
+
+        if(isDragging){
+
+            isDragging = false;
+
+            divider.classList.remove('active');
+
+            document.body.style.cursor = '';
+
+            document.body.style.userSelect = '';
+
+        }
+
+    });
+
+})();
+
+
+
+// ---------- 初始化启动 ----------
+
+loadAllConfig();
+
+updateStatus();
+
+updateSysinfo();
+
+loadLogs();
+
+logTimer = setInterval(loadLogs, 3000);
+
+setInterval(updateStatus, 5000);
+
+setInterval(updateSysinfo, 3000);
+
+
+
+
+
+</script>
+
+
+<!-- Update Modal -->
+<div class="modal-overlay" id="modal-update">
+    <div class="modal-box" style="width: 540px;">
+        <div class="modal-header">
+            <div class="modal-title">更新 Hysteria 2 核心</div>
+        </div>
+        <div style="background:var(--bg-main);border:1px solid var(--border);border-radius:6px;padding:12px;font-family:monospace;font-size:12px;color:var(--text-main);min-height:200px;max-height:400px;overflow-y:auto;white-space:pre-wrap;" id="update-log-box">准备下载更新...</div>
+        <div class="modal-footer">
+            <button class="btn btn-save" onclick="location.reload()" id="btn-update-close" style="display:none">关闭并刷新</button>
+        </div>
+    </div>
+</div>
+
+</body>
+
+</html>
