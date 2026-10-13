@@ -1,0 +1,26 @@
+[Unit]
+Description=Hysteria 2 Manager Web Panel
+After=network.target hysteria-server.service
+Wants=hysteria-server.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/etc/hysteria
+
+# 可选环境变量配置
+# Environment="HYST_MANAGER_PORT=42075"
+# Environment="HYST_MANAGER_PASSWORD=your_strong_password"
+# Environment="HYST_CONFIG_PATH=/etc/hysteria/config.yaml"
+# Environment="HYST_SERVICE_NAME=hysteria-server"
+# Environment="HYST_SERVER_HOST="
+
+ExecStart=/usr/bin/python3 /etc/hysteria/hysteria_manager.py
+Restart=always
+RestartSec=3
+
+# 基础资源与安全限制
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
